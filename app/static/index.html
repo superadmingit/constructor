@@ -113,9 +113,9 @@ const PICS={
 };
 
 /* ---------- состояние ---------- */
-const S={step:0,family:null,material:'soft_steel',sigma:'',series:'',values:{},unk:{},holes:[],presses:[16,25,40,63,100,160],res:null,fam:null};
+const S={step:0,session:null,photos:{},family:null,material:'soft_steel',sigma:'',series:'',values:{},unk:{},holes:[],presses:[16,25,40,63,100,160],res:null,fam:null};
 let META=null;
-const STEPS=['Тип детали','Материал','Размеры','Отверстия','Прессы','Результат'];
+const STEPS=['Тип детали','Фото','Материал','Размеры','Отверстия','Прессы','Результат'];
 function steps(){const e=$('#steps');e.replaceChildren(...STEPS.map((t,i)=>h('span',{class:i===S.step?'on':(i<S.step?'done':'')},`${i+1}. ${t}`)))}
 function go(i){S.step=i;render();window.scrollTo({top:0})}
 function nav(back,next,label='Дальше',dis=false){return h('div',{class:'nav'},back!=null?h('button',{class:'btn ghost',type:'button',onclick:()=>go(back)},'Назад'):null,
@@ -128,18 +128,51 @@ function stepFamily(v){
     onclick:()=>{if(S.family!==f.key){S.family=f.key;S.values={};S.unk={};S.holes=[]}S.fam=f;go(1)}},svg(PICS[f.key]),h('b',{},f.title),h('small',{},f.hint)))});
   v.append(g);
 }
+
+/* ---------- фото ---------- */
+const SLOTS=[
+ ['overview','Общий вид','Деталь целиком на ровном светлом фоне, вся в кадре, с расстояния около 40 см. Свет сверху, без тени от телефона.'],
+ ['top','Сверху','Телефон строго над деталью, параллельно столу. Рядом положите линейку: по ней конструктор проверит масштаб.'],
+ ['side','Сбоку','Деталь лежит на столе. Камера на уровне детали, чтобы видны были высота полок и ступеньки. Линейку поставьте рядом.'],
+ ['end','С торца','Смотрим вдоль детали: видно, как согнуты полки и сколько их. Линейку положите у основания.'],
+ ['drawing','Чертёж или бирка','Если есть чертёж от заказчика или бирка на партии металла, снимите крупно и ровно, чтобы читались цифры.'],
+ ['extra','Сомнительное место','Гиб с трещиной, необычная ступенька, что-то, что вы не смогли измерить. Снимите крупно и напишите, что там, в заметке.']];
+async function ensureSession(){if(S.session)return S.session;const r=await fetch('api/session',{method:'POST'});S.session=(await r.json()).session;return S.session}
+function shrink(file,max=1600){return new Promise((ok,bad)=>{const im=new Image();const u=URL.createObjectURL(file);
+  im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+    c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?ok(b):bad(new Error('Не удалось обработать снимок')),'image/jpeg',.85)};
+  im.onerror=()=>{URL.revokeObjectURL(u);bad(new Error('Не удалось открыть снимок. Нужен JPEG или PNG.'))};im.src=u})}
+function stepPhotos(v){
+  v.append(h('h2',{},'Фото детали'),h('p',{class:'lede'},'Можно пропустить. Фото нужны конструктору, чтобы проверить деталь. Размеры по фото программа не определяет, их вы вводите на следующих шагах.'),
+    h('div',{class:'ok'},'Снимки хранятся на сервере 3 часа и попадут в архив с результатом.'));
+  SLOTS.forEach(([k,t,how])=>{
+    const msg=h('p',{class:'msg','aria-live':'polite'});const box=h('div',{class:'card'});
+    const draw=()=>{box.replaceChildren(h('div',{class:'fhead'},h('label',{},t)),h('p',{class:'what'},how));
+      if(S.photos[k]){box.append(h('img',{src:S.photos[k],alt:t,style:'width:100%;max-width:280px;border-radius:8px;margin-top:8px;display:block'}),
+        h('div',{class:'row'},h('button',{class:'chip',type:'button',onclick:async()=>{await fetch(`api/session/${S.session}/photo/${k}`,{method:'DELETE'});URL.revokeObjectURL(S.photos[k]);delete S.photos[k];draw()}},'Убрать')))}
+      else{const inp=h('input',{type:'file',accept:'image/*',capture:'environment',id:'ph_'+k,style:'position:absolute;left:-9999px'});
+        inp.onchange=async()=>{const f=inp.files[0];if(!f)return;msg.textContent='';
+          try{const blob=await shrink(f);const sid=await ensureSession();
+            const r=await fetch(`api/session/${sid}/photo/${k}`,{method:'POST',headers:{'Content-Type':'image/jpeg'},body:blob});
+            if(!r.ok){const d=await r.json();throw new Error(d.detail||'Не загрузилось')}
+            S.photos[k]=URL.createObjectURL(blob);draw()}catch(e){msg.textContent=e.message}};
+        box.append(inp,h('div',{class:'row'},h('label',{class:'btn ghost',for:'ph_'+k,style:'display:inline-flex;align-items:center'},'Снять или выбрать фото')))}
+      box.append(msg)};
+    draw();v.append(box)});
+  v.append(nav(0,()=>go(2),'Дальше'));
+}
 function stepMaterial(v){
   v.append(h('h2',{},'Материал и серия'));
   const c=h('div',{class:'card'});
   c.append(h('div',{class:'fhead'},h('label',{},'Из чего деталь')),h('p',{class:'what'},'Если не знаете точно, выберите «мягкая сталь»: программа посчитает усилия с запасом.'));
   const g=h('div',{class:'row'});
-  Object.entries(META.materials).forEach(([k,t])=>g.append(h('button',{class:'chip',type:'button','aria-pressed':S.material===k?'true':'false',onclick:()=>{S.material=k;go(1)}},t)));
+  Object.entries(META.materials).forEach(([k,t])=>g.append(h('button',{class:'chip',type:'button','aria-pressed':S.material===k?'true':'false',onclick:()=>{S.material=k;go(2)}},t)));
   c.append(g);
   const sg=h('input',{type:'text',inputmode:'decimal',placeholder:'например 420',id:'sg'});sg.value=S.sigma;sg.oninput=()=>S.sigma=sg.value;
   const se=h('input',{type:'text',inputmode:'numeric',placeholder:'например 20000',id:'se'});se.value=S.series;se.oninput=()=>S.series=se.value;
   c.append(h('div',{class:'field'},h('div',{class:'fhead'},h('label',{for:'sg'},'Прочность σв из сертификата, МПа')),h('p',{class:'what'},'Если сертификата нет, оставьте пустым.'),h('div',{class:'row'},sg)),
     h('div',{class:'field'},h('div',{class:'fhead'},h('label',{for:'se'},'Сколько деталей нужно в год')),h('p',{class:'what'},'Нужно, чтобы понять, выгоден ли прогрессивный штамп. Можно оставить пустым.'),h('div',{class:'row'},se)));
-  v.append(c,nav(0,()=>go(2)));
+  v.append(c,nav(1,()=>go(3)));
 }
 function stepDims(v){
   const f=S.fam;
@@ -148,7 +181,7 @@ function stepDims(v){
   f.measures.forEach(m=>{
     const id='m_'+m.key;const inp=h('input',{type:'text',inputmode:'decimal',id,placeholder:m.unit==='°'?'90':''});
     inp.value=S.values[m.key]??'';const msg=h('p',{class:'msg','aria-live':'polite'});
-    const unk=m.default!=null?h('button',{class:'chip unk',type:'button','aria-pressed':S.unk[m.key]?'true':'false',onclick:()=>{S.unk[m.key]=!S.unk[m.key];if(S.unk[m.key]){S.values[m.key]='';inp.value=''}go(2)}},'Не знаю'):null;
+    const unk=m.default!=null?h('button',{class:'chip unk',type:'button','aria-pressed':S.unk[m.key]?'true':'false',onclick:()=>{S.unk[m.key]=!S.unk[m.key];if(S.unk[m.key]){S.values[m.key]='';inp.value=''}go(3)}},'Не знаю'):null;
     const check=()=>{msg.textContent='';const n=num(S.values[m.key]);if(S.values[m.key]&&n==null)msg.textContent='Введите число, например 12,5.';
       else if(n!=null&&(n<m.lo||n>m.hi))msg.textContent=`Обычно от ${fmt(m.lo)} до ${fmt(m.hi)} ${m.unit}. Проверьте.`};
     inp.oninput=()=>{S.values[m.key]=inp.value;S.unk[m.key]=false;check()};
@@ -159,7 +192,7 @@ function stepDims(v){
       h('details',{},h('summary',{},`Как мерить (${m.tool})`),h('ol',{},m.how.map(x=>h('li',{},x))))));
   });
   const ready=()=>f.measures.every(m=>S.unk[m.key]||(num(S.values[m.key])!=null&&num(S.values[m.key])>=m.lo&&num(S.values[m.key])<=m.hi));
-  v.append(c,nav(1,()=>{if(!ready()){alert('Заполните все размеры (или нажмите «Не знаю», где можно).');return}go(3)}));
+  v.append(c,nav(2,()=>{if(!ready()){alert('Заполните все размеры (или нажмите «Не знаю», где можно).');return}go(4)}));
 }
 function faceName(k){return({base:'Основание',flange_1:'Полка 1 (справа)',flange_2:'Полка 2 (слева)'})[k]}
 function stepHoles(v){
@@ -167,48 +200,48 @@ function stepHoles(v){
   const c=h('div',{class:'card'});
   if(!S.holes.length)c.append(h('p',{class:'muted'},'Отверстий нет. Если есть — добавьте.'));
   S.holes.forEach((ho,i)=>{
-    const face=h('select',{'aria-label':'Где отверстие'},S.fam.faces.map(k=>h('option',{value:k},faceName(k))));face.value=ho.face;face.onchange=()=>{ho.face=face.value;go(3)};
-    const kind=h('select',{'aria-label':'Вид'},h('option',{value:'round'},'Круглое'),h('option',{value:'slot'},'Паз (продолговатое)'));kind.value=ho.kind;kind.onchange=()=>{ho.kind=kind.value;go(3)};
+    const face=h('select',{'aria-label':'Где отверстие'},S.fam.faces.map(k=>h('option',{value:k},faceName(k))));face.value=ho.face;face.onchange=()=>{ho.face=face.value;go(4)};
+    const kind=h('select',{'aria-label':'Вид'},h('option',{value:'round'},'Круглое'),h('option',{value:'slot'},'Паз (продолговатое)'));kind.value=ho.kind;kind.onchange=()=>{ho.kind=kind.value;go(4)};
     const f=(k,lab,ph)=>{const e=h('input',{type:'text',inputmode:'decimal',placeholder:ph,'aria-label':lab});e.value=ho[k]??'';e.oninput=()=>ho[k]=e.value;return h('label',{class:'row',style:'margin:0'},h('span',{class:'muted',style:'min-width:12em'},lab),e)};
-    const box=h('div',{class:'hole'},h('div',{class:'row'},h('b',{},`Отверстие ${i+1}`),face,kind,h('button',{class:'chip',type:'button',onclick:()=>{S.holes.splice(i,1);go(3)}},'Убрать')));
+    const box=h('div',{class:'hole'},h('div',{class:'row'},h('b',{},`Отверстие ${i+1}`),face,kind,h('button',{class:'chip',type:'button',onclick:()=>{S.holes.splice(i,1);go(4)}},'Убрать')));
     if(ho.kind==='round')box.append(f('d','Диаметр, мм','10,5'));else{box.append(f('length','Длина паза, мм','26'),f('width','Ширина паза, мм','12'));
       const an=h('select',{'aria-label':'Направление паза'},h('option',{value:'90'},'вдоль детали (по длине A)'),h('option',{value:'0'},'поперёк детали'));an.value=String(ho.angle??90);an.onchange=()=>ho.angle=+an.value;box.append(h('div',{class:'row'},h('span',{class:'muted',style:'min-width:12em'},'Паз идёт'),an))}
     if(ho.face==='base')box.append(f('x','От левого края, мм',''),f('y','От переднего торца, мм',''));
     else box.append(f('s','От переднего торца, мм',''),f('e','От края полки, мм',''));
     c.append(box);
   });
-  c.append(h('div',{class:'nav'},h('button',{class:'btn ghost',type:'button',onclick:()=>{S.holes.push({face:'base',kind:'round',angle:90});go(3)}},'Добавить отверстие')));
-  v.append(c,nav(2,()=>go(4)));
+  c.append(h('div',{class:'nav'},h('button',{class:'btn ghost',type:'button',onclick:()=>{S.holes.push({face:'base',kind:'round',angle:90});go(4)}},'Добавить отверстие')));
+  v.append(c,nav(3,()=>go(5)));
 }
 function stepPresses(v){
   v.append(h('h2',{},'Какие прессы есть'),h('p',{class:'lede'},'Усилие в тоннах, как на шильдике. Программа подберёт, на какой пресс встанет каждый штамп.'));
   const c=h('div',{class:'card'});const row=h('div',{class:'row'});
-  S.presses.forEach((t,i)=>row.append(h('button',{class:'chip',type:'button','aria-pressed':'true',onclick:()=>{S.presses.splice(i,1);go(4)},'aria-label':`Убрать пресс ${t} т`},`${fmt(t)} т ✕`)));
+  S.presses.forEach((t,i)=>row.append(h('button',{class:'chip',type:'button','aria-pressed':'true',onclick:()=>{S.presses.splice(i,1);go(5)},'aria-label':`Убрать пресс ${t} т`},`${fmt(t)} т ✕`)));
   const add=h('input',{type:'text',inputmode:'decimal',placeholder:'например 63'});
-  c.append(row,h('div',{class:'row'},add,h('button',{class:'btn ghost',type:'button',onclick:()=>{const n=num(add.value);if(n&&n>0&&n<=2000){S.presses.push(n);S.presses.sort((a,b)=>a-b);go(4)}}},'Добавить')));
-  v.append(c,nav(3,calc,'Рассчитать',!S.presses.length));
+  c.append(row,h('div',{class:'row'},add,h('button',{class:'btn ghost',type:'button',onclick:()=>{const n=num(add.value);if(n&&n>0&&n<=2000){S.presses.push(n);S.presses.sort((a,b)=>a-b);go(5)}}},'Добавить')));
+  v.append(c,nav(4,calc,'Рассчитать',!S.presses.length));
 }
 async function calc(){
-  go(5);const v=$('#view');v.replaceChildren(h('div',{class:'card'},h('span',{class:'spin'}),'Считаю развёртку, 3D, чертёж и штампы. Обычно 5–20 секунд.'));
+  go(6);const v=$('#view');v.replaceChildren(h('div',{class:'card'},h('span',{class:'spin'}),'Считаю развёртку, 3D, чертёж и штампы. Обычно 5–20 секунд.'));
   const values={};S.fam.measures.forEach(m=>values[m.key]=S.unk[m.key]?null:num(S.values[m.key]));
   const holes=S.holes.map(o=>({face:o.face,kind:o.kind,d:num(o.d),length:num(o.length),width:num(o.width),x:num(o.x),y:num(o.y),s:num(o.s),e:num(o.e),angle:o.angle??90}));
-  const body={family:S.family,values,material:S.material,sigma_b_mpa:num(S.sigma),series_per_year:num(S.series)?Math.round(num(S.series)):null,holes,presses_t:S.presses};
+  const body={family:S.family,values,material:S.material,sigma_b_mpa:num(S.sigma),series_per_year:num(S.series)?Math.round(num(S.series)):null,holes,presses_t:S.presses,session:S.session};
   try{const r=await fetch('api/calculate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const d=await r.json();if(!r.ok)throw new Error(typeof d.detail==='string'?d.detail:'Проверьте введённые данные.');S.res=d;render()}
-  catch(e){v.replaceChildren(h('div',{class:'warn'},h('b',{},'Не получилось. '),e.message),nav(2,null))}
+  catch(e){v.replaceChildren(h('div',{class:'warn'},h('b',{},'Не получилось. '),e.message),nav(3,null))}
 }
 function stepResult(v){
   const r=S.res;if(!r)return;
   v.append(h('h2',{},'Готово'),h('div',{class:'warn'},h('b',{},'Черновик. '),'Штамп по этим данным не изготавливать, пока конструктор не проверит, а размеры заготовки не подтвердит пробный гиб.'));
   const best=r.schemes.find(s=>s.key===r.recommended);
-  if(best)v.append(h('div',{class:'ok'},h('b',{},`Рекомендуем: ${best.title}. `),`${best.dies.length} ${best.dies.length===1?'штамп':'штампа'}, самый тяжёлый ${fmt(Math.max(...best.dies.map(d=>d.t)))} т.`));
+  if(best)v.append(h('div',{class:'ok'},h('b',{},`Рекомендуем: ${best.title}. `),best.dies.length?`${best.dies.length} ${best.dies.length===1?'штамп':'штампа'}, самый тяжёлый ${fmt(Math.max(...best.dies.map(d=>d.t)))} т.`:'Штамп не нужен: достаточно гильотины.'));
   v.append(h('div',{class:'card res'},h('b',{},'Деталь'),h('img',{src:r.iso,alt:'Общий вид детали'}),h('p',{class:'muted'},`Габарит: ${r.formed.map(fmt).join(' × ')} мм`)),
     h('div',{class:'card res'},h('b',{},'Развёртка (заготовка)'),h('div',{class:'flat'},svg(r.flat_svg)),h('p',{},`Размер заготовки: `,h('b',{},`${fmt(r.blank.w)} × ${fmt(r.blank.l)} мм`)),
       h('p',{class:'muted'},`Синие пунктиры — линии гибов. K-фактор ${r.x_factor!=null?fmt(r.x_factor):'—'} по справочнику: на вашем металле уточняется пробным гибом.`)));
   const sc=h('div',{class:'card'},h('b',{},'Как делать: варианты'));
   r.schemes.forEach(s=>sc.append(h('div',{class:'scheme'+(s.key===r.recommended?' best':'')},
     h('div',{class:'shead'},h('b',{},`${s.key}. ${s.title}`),h('span',{class:'tag'},s.suitable?(s.key===r.recommended?'рекомендуем':'подходит'):'не подходит')),
-    h('ul',{},s.dies.map(d=>h('li',{},`${d.name} — ${fmt(d.t)} т`))),s.verdict?h('p',{class:'muted'},ru(s.verdict)):null)));
+    h('ul',{},s.dies.length?s.dies.map(d=>h('li',{},`${d.name} — ${fmt(d.t)} т`)):h('li',{},'штамп не нужен, только гильотина')),s.verdict?h('p',{class:'muted'},ru(s.verdict)):null)));
   v.append(sc);
   if(r.warnings.length||r.unknown.length)v.append(h('div',{class:'card'},h('b',{},'На что обратить внимание'),h('ul',{},[...r.warnings,...r.unknown].slice(0,12).map(w=>h('li',{},ru(w))))));
   const F=r.files;v.append(h('div',{class:'card'},h('b',{},'Файлы'),h('div',{class:'dl'},
@@ -216,12 +249,13 @@ function stepResult(v){
     h('a',{href:F.dxf,download:''},h('b',{},'Развёртка, DXF'),h('small',{},'для станка и AutoCAD/NX')),
     h('a',{href:F.step,download:''},h('b',{},'3D-модель, STEP'),h('small',{},'NX, SolidWorks, Компас')),
     h('a',{href:F.report,download:''},h('b',{},'Расчёт, MD'),h('small',{},'проверки, усилия, прессы')),
-    h('a',{href:F.model,download:''},h('b',{},'Модель, JSON'),h('small',{},'для оператора'))),h('p',{class:'muted'},'Файлы хранятся 3 часа.')));
-  v.append(nav(2,()=>{S.res=null;go(0)},'Новая деталь'));
+    h('a',{href:F.model,download:''},h('b',{},'Модель, JSON'),h('small',{},'для оператора')),
+    F.photos?h('a',{href:F.photos,download:''},h('b',{},'Фото, ZIP'),h('small',{},r.photos.join(', '))):null),h('p',{class:'muted'},'Файлы хранятся 3 часа.')));
+  v.append(nav(3,()=>{S.res=null;S.session=null;S.photos={};go(0)},'Новая деталь'));
 }
 function render(){steps();const v=$('#view');v.replaceChildren();
   if(!META){v.append(h('div',{class:'card'},h('span',{class:'spin'}),'Загрузка…'));return}
-  [stepFamily,stepMaterial,stepDims,stepHoles,stepPresses,stepResult][S.step](v)}
+  [stepFamily,stepPhotos,stepMaterial,stepDims,stepHoles,stepPresses,stepResult][S.step](v)}
 fetch('api/families').then(r=>r.json()).then(d=>{META=d;render()}).catch(()=>{$('#view').replaceChildren(h('div',{class:'warn'},'Сервер не отвечает. Обновите страницу.'))});
 render();
 })();

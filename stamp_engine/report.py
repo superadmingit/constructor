@@ -74,7 +74,7 @@ def build_report(pl: Planner, schemes, best) -> str:
     w("| Схема | Штампов | Самый тяжёлый штамп, т | Итог |")
     w("|---|---|---|---|")
     for s in schemes:
-        heavy = max(d.total_kn for d in s.dies)
+        heavy = max((d.total_kn for d in s.dies), default=None)
         mark = "подходит" if s.suitable else "не подходит"
         w(f"| {s.key}. {s.title} | {len(s.dies)} | {_t(heavy)} | {mark}{(' — ' + s.verdict) if s.verdict else ''} |")
     w("")
@@ -127,9 +127,10 @@ def build_report(pl: Planner, schemes, best) -> str:
     if best is None:
         w("Ни одна схема не проходит. Нужны данные о прессах или другая технология.")
     else:
-        w(f"**Схема {best.key}: {best.title}** — {len(best.dies)} штампов, самый тяжёлый "
-          f"{_t(max(d.total_kn for d in best.dies))} т. "
-          f"Выбрана как допустимая схема с наименьшим числом штампов и меньшим усилием.")
+        w(f"**Схема {best.key}: {best.title}** — "
+          + (f"{len(best.dies)} штампов, самый тяжёлый {_t(max(d.total_kn for d in best.dies))} т. " if best.dies
+             else "штампы не нужны, достаточно гильотины. ")
+          + "Выбрана как допустимая схема с наименьшим числом штампов и меньшим усилием.")
     w("")
     w("Порядок гибов — предложение по простым правилам (подсечки → две полки → одиночные). "
       "Его подтверждает конструктор.")

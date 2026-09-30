@@ -201,3 +201,13 @@ def test_flange_holes_measured_from_same_end():
     spec = build("channel", {"A": 60, "B": 40, "C": 25, "S": 2, "R": 2, "U": 90}, holes=holes, meta=META)
     ys = sorted(round(h["cy"], 3) for h in unfold(spec, NORMS).holes)
     assert ys == [15.0, 15.0]
+
+
+def test_plain_rectangle_needs_no_die():
+    """Прямоугольник без отверстий: режется на гильотине, штамп не нужен. Расчёт не должен падать."""
+    spec = build("plate", {"A": 80, "B": 50, "S": 3}, meta=META)
+    pl = Planner(load_part(spec, NORMS), Shop.from_dict(load("shop_example.json")), NORMS)
+    best = pl.recommend(pl.plan())
+    assert best.key == "B" and best.dies == []
+    from stamp_engine.report import build_report
+    assert "штампы не нужны" in build_report(pl, pl.plan(), best)

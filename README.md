@@ -26,8 +26,9 @@ pinned: false
 ## Веб-приложение для стороннего пользователя
 
 Страница `/`: выбрать тип детали, ввести размеры по буквам (с подсказками «чем и как мерить»), отверстия, прессы.
-На выходе: картинка детали, развёртка, варианты штамповки с усилиями, файлы PDF, DXF, STEP, отчёт и модель JSON.
-API для программ: `/api/docs`.
+Второй шаг: фото детали (общий вид, сверху, сбоку, с торца, чертёж или бирка, сомнительное место) с подсказкой, как снимать. Фото необязательны, сжимаются на телефоне и попадают в архив с результатом. Размеры по фото не определяются.
+На выходе: картинка детали, развёртка, варианты штамповки с усилиями, файлы PDF, DXF, STEP, отчёт, модель JSON и архив с фото.
+API для программ: `/api/docs`. Фото: `POST /api/session`, затем `POST /api/session/{id}/photo/{slot}` (тело запроса — JPEG или PNG до 6 МБ), потом `session` в `/api/calculate`. Файлы хранятся 3 часа; постоянное хранилище (Supabase Storage) — этап 1 в ARCHITECTURE.md.
 
 ```
 pip install -r requirements.txt
@@ -56,7 +57,7 @@ uvicorn app.main:app --port 7860          # открыть http://localhost:7860
 
 ```
 pip install -r requirements-dev.txt
-python -m pytest -q                                                   # 43 теста
+python -m pytest -q                                                   # 47 тестов
 python -m stamp_engine.cli examples/skoba_u.json examples/shop_example.json --out out/
 python tools/make_norms_pdf.py norms_approval.pdf                     # листы для конструктора
 python datapage/build.py data_collection.html                         # страница данных цеха

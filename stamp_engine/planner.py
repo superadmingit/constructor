@@ -345,4 +345,4 @@ class Planner:
         ok = [s for s in schemes if s.suitable]
         if not ok:
             return None
-        return min(ok, key=lambda s: (len(s.dies), max(d.total_kn for d in s.dies)))
+        return min(ok, key=lambda s: (len(s.dies), max((d.total_kn for d in s.dies), default=0.0)))

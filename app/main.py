@@ -11,7 +11,7 @@ import time
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, Field
 
@@ -28,6 +28,10 @@ from stamp_engine.sheet.solid import build_solid, export_step
 ROOT = Path(__file__).resolve().parent
 JOBS = Path("/tmp/constructor_jobs")
 JOB_TTL_S = 3 * 3600
+PHOTO_SLOTS = {"overview": "Общий вид", "top": "Сверху", "side": "Сбоку", "end": "С торца",
+               "drawing": "Чертёж или бирка", "extra": "Сомнительное место"}
+PHOTO_MAX = 6 * 1024 * 1024
+MAGIC = {b"\xff\xd8\xff": ".jpg", b"\x89PNG": ".png"}
 NORMS = Norms.load()
 MATERIALS = {k: v["title"] for k, v in NORMS.data["materials"].items()}
 
@@ -55,6 +59,7 @@ class CalcRequest(BaseModel):
     holes: list[Hole] = []
     series_per_year: int | None = None
     presses_t: list[float] = [16, 25, 40, 63, 100, 160]
+    session: str | None = None
     part_id: str = "НОВАЯ"
     name: str = ""
 
@@ -77,6 +82,54 @@ def families():
     return {"families": [{"key": k, "title": f.title, "hint": f.hint, "faces": f.faces, "measures": measurement_plan(k)}
                          for k, f in FAMILIES.items()],
             "materials": MATERIALS}
+
+
+def _session_dir(sid: str) -> Path:
+    if not sid.isalnum() or len(sid) > 32:
+        raise HTTPException(404)
+    d = JOBS / sid
+    if not d.is_dir():
+        raise HTTPException(404, "Сессия устарела. Обновите страницу.")
+    return d
+
+
+@app.post("/api/session")
+def new_session():
+    """Черновик: сюда складываются фото до расчёта. Хранится 3 часа."""
+    _cleanup()
+    sid = uuid.uuid4().hex[:12]
+    (JOBS / sid / "photos").mkdir(parents=True)
+    return {"session": sid, "slots": PHOTO_SLOTS}
+
+
+@app.post("/api/session/{sid}/photo/{slot}")
+async def put_photo(sid: str, slot: str, request: Request):
+    """Тело запроса — сам файл (JPEG или PNG, до 6 МБ). Повторная загрузка заменяет фото."""
+    d = _session_dir(sid)
+    if slot not in PHOTO_SLOTS:
+        raise HTTPException(400, "Неизвестный вид фото.")
+    data = await request.body()
+    if len(data) > PHOTO_MAX:
+        raise HTTPException(413, "Фото больше 6 МБ. Снимите с меньшим разрешением.")
+    ext = next((e for m, e in MAGIC.items() if data.startswith(m)), None)
+    if ext is None:
+        raise HTTPException(400, "Нужен снимок в формате JPEG или PNG.")
+    ph = d / "photos"
+    ph.mkdir(exist_ok=True)
+    for old in ph.glob(f"{slot}.*"):
+        old.unlink()
+    (ph / f"{slot}{ext}").write_bytes(data)
+    return {"ok": True, "slot": slot, "bytes": len(data)}
+
+
+@app.delete("/api/session/{sid}/photo/{slot}")
+def delete_photo(sid: str, slot: str):
+    d = _session_dir(sid)
+    if slot not in PHOTO_SLOTS:
+        raise HTTPException(400, "Неизвестный вид фото.")
+    for old in (d / "photos").glob(f"{slot}.*"):
+        old.unlink()
+    return {"ok": True}
 
 
 @app.get("/api/health")
@@ -129,9 +182,9 @@ def calculate(req: CalcRequest):
     except (InputError, SheetError, NotSupported) as e:
         raise HTTPException(400, str(e))
 
-    job = uuid.uuid4().hex[:12]
-    d = JOBS / job
-    d.mkdir(parents=True)
+    job = req.session if req.session else uuid.uuid4().hex[:12]
+    d = _session_dir(job) if req.session else JOBS / job
+    d.mkdir(parents=True, exist_ok=True)
     files = {"pdf": f"{pid}_chertezh.pdf", "dxf": f"{pid}_razvertka.dxf", "step": f"{pid}.step",
              "report": f"report_{pid}.md", "model": f"{pid}_model.json"}
     write_drawing(spec, flat, solid, str(d / files["pdf"]))
@@ -149,6 +202,13 @@ def calculate(req: CalcRequest):
     best = pl.recommend(schemes)
     (d / files["report"]).write_text(build_report(pl, schemes, best), encoding="utf-8")
 
+    photos = sorted((d / "photos").glob("*.*")) if (d / "photos").is_dir() else []
+    if photos:
+        import zipfile
+        with zipfile.ZipFile(d / f"{pid}_foto.zip", "w") as z:
+            for ph in photos:
+                z.write(ph, f"{PHOTO_SLOTS.get(ph.stem, ph.stem)}{ph.suffix}")
+        files["photos"] = f"{pid}_foto.zip"
     x0, y0, x1, y1 = flat.bbox()
     bb = solid.val().BoundingBox()
     counts = {}
@@ -170,6 +230,7 @@ def calculate(req: CalcRequest):
         "flat_svg": flat_svg(flat),
         "files": {k: f"/files/{job}/{v}" for k, v in files.items()},
         "iso": f"/files/{job}/iso.png",
+        "photos": [PHOTO_SLOTS.get(p.stem, p.stem) for p in photos],
     }
 
 

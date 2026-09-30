@@ -37,3 +37,25 @@ def test_input_error_is_readable():
 
 def test_files_cannot_escape_job_folder():
     assert client.get("/files/abc/..%2F..%2Fetc%2Fpasswd").status_code == 404
+
+
+JPEG = b"\xff\xd8\xff\xe0" + b"0" * 200
+
+
+def test_photos_are_accepted_and_bundled():
+    sid = client.post("/api/session").json()["session"]
+    assert client.post(f"/api/session/{sid}/photo/top", content=JPEG).status_code == 200
+    assert client.post(f"/api/session/{sid}/photo/side", content=JPEG).status_code == 200
+    assert client.delete(f"/api/session/{sid}/photo/side").status_code == 200
+    body = {"family": "plate", "values": {"A": 80, "B": 50, "S": 3}, "material": "soft_steel", "session": sid}
+    d = client.post("/api/calculate", json=body).json()
+    assert d["job"] == sid and d["photos"] == ["Сверху"]
+    assert client.get(d["files"]["photos"]).status_code == 200
+
+
+def test_bad_photos_are_refused():
+    sid = client.post("/api/session").json()["session"]
+    assert client.post(f"/api/session/{sid}/photo/top", content=b"MZ not an image").status_code == 400
+    assert client.post(f"/api/session/{sid}/photo/nope", content=JPEG).status_code == 400
+    assert client.post(f"/api/session/{sid}/photo/top", content=JPEG + b"0" * (6 * 1024 * 1024)).status_code == 413
+    assert client.post("/api/session/zzzz/photo/top", content=JPEG).status_code == 404
