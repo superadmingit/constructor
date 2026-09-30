@@ -1,0 +1,110 @@
+{
+ "id": "SK-001",
+ "name": "Скоба П-образная (пример)",
+ "material": {
+  "group": "soft_steel",
+  "grade": {
+   "value": "08пс",
+   "source": "stated"
+  },
+  "sigma_b_mpa": {
+   "value": null,
+   "source": "unknown"
+  }
+ },
+ "thickness_mm": {
+  "value": 2.0,
+  "source": "measured"
+ },
+ "bend_radius_mm": {
+  "value": 2.0,
+  "source": "measured"
+ },
+ "series": {
+  "value": 30000,
+  "source": "stated",
+  "note": "в год"
+ },
+ "blank_status": "preliminary",
+ "base": {
+  "outline": [
+   [
+    0,
+    0
+   ],
+   [
+    40,
+    0
+   ],
+   [
+    40,
+    60
+   ],
+   [
+    0,
+    60
+   ]
+  ],
+  "holes": [
+   {
+    "id": "H1",
+    "kind": "round",
+    "x": 20,
+    "y": 30,
+    "d": {
+     "value": 10.5,
+     "source": "measured"
+    }
+   }
+  ]
+ },
+ "flanges": [
+  {
+   "id": "F1",
+   "title": "Полка правая",
+   "edge": 1,
+   "angle": 90,
+   "direction": "up",
+   "height": {
+    "value": 25,
+    "source": "measured"
+   },
+   "holes": [
+    {
+     "id": "H2",
+     "kind": "round",
+     "s": 30,
+     "e": 10,
+     "d": {
+      "value": 6.5,
+      "source": "measured"
+     }
+    }
+   ]
+  },
+  {
+   "id": "F2",
+   "title": "Полка левая",
+   "edge": 3,
+   "angle": 90,
+   "direction": "up",
+   "height": {
+    "value": 25,
+    "source": "measured"
+   },
+   "holes": [
+    {
+     "id": "H3",
+     "kind": "round",
+     "s": 30,
+     "e": 10,
+     "d": {
+      "value": 6.5,
+      "source": "measured"
+     }
+    }
+   ]
+  }
+ ],
+ "open_questions": []
+}

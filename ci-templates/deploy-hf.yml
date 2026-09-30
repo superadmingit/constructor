@@ -1,0 +1,24 @@
+# После каждого push в main копирует репозиторий в Hugging Face Space — там приложение доступно по публичной ссылке.
+# Настройка один раз: Settings → Secrets and variables → Actions:
+#   секрет  HF_TOKEN  — токен Hugging Face с правом записи (Write)
+#   переменная HF_SPACE — имя пространства, например  superadmingit/constructor
+# Пока секрет не задан, шаг просто пропускается.
+name: deploy-to-huggingface
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: ${{ vars.HF_SPACE }}
+        run: |
+          if [ -z "$HF_TOKEN" ] || [ -z "$HF_SPACE" ]; then echo "HF_TOKEN или HF_SPACE не заданы — пропускаю"; exit 0; fi
+          git push --force "https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" HEAD:main

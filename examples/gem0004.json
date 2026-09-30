@@ -1,0 +1,245 @@
+{
+ "id": "GEM0004",
+ "name": "Кронштейн гнутый (образец заказчика)",
+ "material": {
+  "group": "soft_steel",
+  "grade": {
+   "value": null,
+   "source": "unknown"
+  },
+  "sigma_b_mpa": {
+   "value": null,
+   "source": "unknown"
+  }
+ },
+ "thickness_mm": {
+  "value": 3.0,
+  "source": "measured"
+ },
+ "bend_radius_mm": {
+  "value": 3.0,
+  "source": "assumed",
+  "note": "не измерен, принят = S"
+ },
+ "k_factor": {
+  "value": 0.4,
+  "source": "assumed",
+  "note": "как в прежних расчётах; уточнить пробным гибом"
+ },
+ "series": {
+  "value": 10000,
+  "source": "stated",
+  "note": "«больше 10 000»; в год или всего — уточнить"
+ },
+ "blank_status": "preliminary",
+ "base": {
+  "outline": [
+   [
+    -41.2697,
+    0,
+    0
+   ],
+   [
+    41.2697,
+    0,
+    0
+   ],
+   [
+    41.2697,
+    109.03,
+    0
+   ],
+   [
+    36.23,
+    109.03,
+    -0.414214
+   ],
+   [
+    31.23,
+    114.03,
+    0
+   ],
+   [
+    31.23,
+    137.797,
+    0
+   ],
+   [
+    -31.23,
+    137.797,
+    0
+   ],
+   [
+    -31.23,
+    114.03,
+    -0.414214
+   ],
+   [
+    -36.23,
+    109.03,
+    0
+   ],
+   [
+    -41.2697,
+    109.03,
+    0
+   ]
+  ],
+  "holes": [
+   {
+    "id": "H1",
+    "kind": "slot",
+    "x": 0,
+    "y": 65.585,
+    "length": {
+     "value": 26.49,
+     "source": "measured"
+    },
+    "width": {
+     "value": 12.01,
+     "source": "measured"
+    },
+    "angle": 90
+   },
+   {
+    "id": "H2",
+    "kind": "round",
+    "x": 0,
+    "y": 115.345,
+    "d": {
+     "value": 12.24,
+     "source": "measured"
+    }
+   }
+  ]
+ },
+ "flanges": [
+  {
+   "id": "B2",
+   "title": "Боковая полка правая",
+   "edge": 1,
+   "angle": {
+    "value": 57.1565,
+    "source": "measured"
+   },
+   "direction": "down",
+   "profile": [
+    [
+     0,
+     10.93
+    ],
+    [
+     79.23,
+     10.93
+    ],
+    [
+     109.03,
+     3.4862
+    ]
+   ],
+   "allow_short": true
+  },
+  {
+   "id": "E1",
+   "title": "Торцевой отгиб",
+   "edge": 5,
+   "angle": {
+    "value": 86.0,
+    "source": "measured"
+   },
+   "direction": "down",
+   "height": {
+    "value": 14.41,
+    "source": "measured"
+   }
+  },
+  {
+   "id": "B1",
+   "title": "Боковая полка левая",
+   "edge": 9,
+   "angle": {
+    "value": 57.1565,
+    "source": "measured"
+   },
+   "direction": "down",
+   "profile": [
+    [
+     0,
+     3.4862
+    ],
+    [
+     29.8,
+     10.93
+    ],
+    [
+     109.03,
+     10.93
+    ]
+   ],
+   "allow_short": true
+  }
+ ],
+ "joggles": [
+  {
+   "id": "J",
+   "title": "Ступенька",
+   "line": [
+    [
+     -60,
+     109.03
+    ],
+    [
+     60,
+     109.03
+    ]
+   ],
+   "at": "end",
+   "far_point": [
+    0,
+    125
+   ],
+   "offset": {
+    "value": 4.48,
+    "source": "measured"
+   },
+   "angle": {
+    "value": 45.0,
+    "source": "assumed",
+    "note": "не измерен"
+   },
+   "direction": "up"
+  }
+ ],
+ "open_questions": [
+  {
+   "id": "Q1",
+   "text": "Высота лепестка над столом: 14,4 или 26,6 мм?",
+   "affects": "длина заготовки"
+  },
+  {
+   "id": "Q2",
+   "text": "Ступенька до отверстия Ø12 или после?",
+   "affects": "положение Ø12, число штампов"
+  },
+  {
+   "id": "Q3",
+   "text": "Наружная ширина посередине: ≈95,3 или ≈93,2 мм?",
+   "affects": "форма кромки заготовки"
+  },
+  {
+   "id": "Q4",
+   "text": "Отверстия как на образце или стандарт под М12?",
+   "affects": "пуансоны"
+  },
+  {
+   "id": "Q5",
+   "text": "Марка стали и σв по сертификату",
+   "affects": "усилия"
+  },
+  {
+   "id": "Q6",
+   "text": "Внутренний радиус гибов",
+   "affects": "развёртка"
+  }
+ ]
+}

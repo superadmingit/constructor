@@ -1,0 +1,68 @@
+{
+  "name": "Пример цеха — данные НЕ проверены",
+  "has_guillotine": true,
+  "heat_treatment": "unknown",
+  "presses": [
+    {
+      "id": "P16",
+      "name": "Пресс 16 т",
+      "kind": "unknown",
+      "force_t": {
+        "value": 16,
+        "source": "stated",
+        "note": "со слов, шильдик не проверен"
+      }
+    },
+    {
+      "id": "P25",
+      "name": "Пресс 25 т",
+      "kind": "unknown",
+      "force_t": {
+        "value": 25,
+        "source": "stated",
+        "note": "со слов, шильдик не проверен"
+      }
+    },
+    {
+      "id": "P40",
+      "name": "Пресс 40 т",
+      "kind": "unknown",
+      "force_t": {
+        "value": 40,
+        "source": "stated",
+        "note": "со слов, шильдик не проверен"
+      }
+    },
+    {
+      "id": "P63",
+      "name": "Пресс 63 т",
+      "kind": "unknown",
+      "force_t": {
+        "value": 63,
+        "source": "stated",
+        "note": "со слов, шильдик не проверен"
+      }
+    },
+    {
+      "id": "P100",
+      "name": "Пресс 100 т",
+      "kind": "unknown",
+      "force_t": {
+        "value": 100,
+        "source": "stated",
+        "note": "со слов, шильдик не проверен"
+      }
+    },
+    {
+      "id": "P160",
+      "name": "Пресс 160 т",
+      "kind": "unknown",
+      "force_t": {
+        "value": 160,
+        "source": "stated",
+        "note": "со слов, шильдик не проверен"
+      }
+    }
+  ],
+  "machines": []
+}

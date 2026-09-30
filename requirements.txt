@@ -1,0 +1,9 @@
+# Ядро и веб-сервис
+cadquery>=2.4
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pyyaml>=6
+ezdxf>=1.1
+shapely>=2.0
+matplotlib>=3.8
+reportlab>=4.0

@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Конструктор штампов: новая деталь</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#EEF1EF;--surface:#FFF;--ink:#1D2528;--ink2:#46534E;--green:#3F6A54;--gfill:#4E7D66;--signal:#F2B700;
+  --danger:#B83A2E;--line:#A8B3AE;--line2:#D5DCD8;--wash:#E4EAE6;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--paper:#161C1E;--surface:#1F282A;--ink:#E9EEEB;--ink2:#AEBAB4;--green:#86BDA2;
+  --danger:#E27D70;--line:#56645F;--line2:#36423F;--wash:#27322F}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.5 'Golos Text',system-ui,'Segoe UI',Roboto,sans-serif;
+  padding-bottom:env(safe-area-inset-bottom,0)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;padding:20px 18px 96px}
+h1{font-size:clamp(24px,5vw,32px);line-height:1.15;margin:8px 0 6px}
+h2{font-size:21px;margin:0 0 6px}
+.lede{color:var(--ink2);margin:0 0 14px;max-width:60ch}
+.steps{display:flex;gap:6px;margin:16px 0 18px;flex-wrap:wrap}
+.steps span{font-size:13px;padding:3px 10px;border-radius:12px;background:var(--wash);color:var(--ink2)}
+.steps span.on{background:var(--gfill);color:#fff}
+.steps span.done{background:color-mix(in srgb,var(--gfill) 25%,var(--surface));color:var(--ink)}
+.card{background:var(--surface);border:1px solid var(--line2);border-radius:12px;padding:16px 16px 18px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.pick{appearance:none;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:12px;cursor:pointer;
+  text-align:left;display:flex;flex-direction:column;gap:6px;min-height:48px}
+.pick svg{width:100%;height:auto}
+.pick b{font-size:16px}.pick small{color:var(--ink2);font-size:14px}
+.pick[aria-pressed="true"]{border-color:var(--gfill);box-shadow:inset 0 0 0 1.5px var(--gfill);background:color-mix(in srgb,var(--gfill) 8%,var(--surface))}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+input[type=text]{height:46px;padding:0 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);font-size:18px;width:9em}
+input.wide{width:100%;max-width:360px;font-size:16px}
+select{height:46px;padding:0 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface)}
+.chip{appearance:none;border:1.5px solid var(--line);background:var(--surface);border-radius:20px;padding:7px 14px;min-height:42px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--gfill);border-color:var(--gfill);color:#fff}
+.chip.unk[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.field{padding:14px 0;border-top:1px dashed var(--line2)}.field:first-of-type{border-top:0}
+.fhead{display:flex;gap:10px;align-items:center}
+.letter{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--signal);color:#2A2000;font-weight:700;flex:none}
+.fhead label{font-weight:600;font-size:17px}
+.what{color:var(--ink2);font-size:15px;margin:4px 0 0}
+details{margin-top:6px;font-size:15px}summary{cursor:pointer;color:var(--green);min-height:32px;padding:4px 0}
+details ol{margin:4px 0;padding-left:22px}
+.msg{font-size:14.5px;margin-top:6px;color:var(--danger)}.msg:empty{display:none}
+.nav{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.btn{appearance:none;border:0;background:var(--gfill);color:#fff;border-radius:10px;padding:12px 20px;min-height:48px;font-weight:600;font-size:16px;cursor:pointer}
+.btn.ghost{background:none;border:1.5px solid var(--line);color:var(--ink);font-weight:500}
+.btn[disabled]{opacity:.5;cursor:default}
+.fig{background:var(--surface);border:1px solid var(--line2);border-radius:12px;padding:10px;margin:8px 0 4px}
+.fig svg{width:100%;height:auto;display:block}
+:is(.fig,.pick) .p{fill:none;stroke:var(--ink);stroke-width:5;stroke-linejoin:round}
+:is(.fig,.pick) .d{stroke:var(--green);stroke-width:1.3;fill:none}:is(.fig,.pick) .a{fill:var(--green)}
+:is(.fig,.pick) .t{font:600 15px 'Golos Text',sans-serif;fill:var(--ink)}:is(.fig,.pick) .n{font:13px 'Golos Text',sans-serif;fill:var(--ink2)}
+:is(.fig,.pick) .l{fill:var(--signal)}:is(.fig,.pick) .lt{font:700 14px 'Golos Text',sans-serif;fill:#2A2000}
+.hole{border-top:1px dashed var(--line2);padding:12px 0}.hole:first-child{border-top:0}
+.warn{border-left:4px solid var(--danger);background:color-mix(in srgb,var(--danger) 8%,var(--surface));padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.ok{border-left:4px solid var(--gfill);background:color-mix(in srgb,var(--gfill) 9%,var(--surface));padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.res img{width:100%;max-width:520px;display:block;margin:auto}
+.res .flat svg{width:100%;height:auto;max-height:420px}
+.res .flat .blank{fill:color-mix(in srgb,var(--gfill) 12%,var(--surface));stroke:var(--ink);stroke-width:.6}
+.res .flat .hole{fill:var(--paper);stroke:var(--ink);stroke-width:.5}
+.res .flat .bend{stroke:#2D5FA0;stroke-width:.5;stroke-dasharray:3 2}
+table{width:100%;border-collapse:collapse;font-size:15px}td,th{text-align:left;padding:7px 6px;border-top:1px dashed var(--line2);vertical-align:top}
+th{font-weight:600;color:var(--ink2);font-size:14px}
+.dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.dl a{display:block;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;color:var(--ink);text-decoration:none;background:var(--surface)}
+.dl a b{display:block}.dl a small{color:var(--ink2)}
+.spin{display:inline-block;width:18px;height:18px;border:3px solid var(--line2);border-top-color:var(--gfill);border-radius:50%;animation:s 1s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes s{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+.muted{color:var(--ink2);font-size:14px}
+.scheme{border-top:1px dashed var(--line2);padding:10px 0}.scheme ul{margin:6px 0;padding-left:20px}
+.scheme.best{border-left:4px solid var(--gfill);padding-left:10px;margin-left:-14px}
+.shead{display:flex;gap:8px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+.tag{font-size:13px;padding:2px 9px;border-radius:10px;background:var(--wash);color:var(--ink2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Новая деталь: развёртка, 3D, чертёж и штампы</h1>
+  <p class="lede">Выберите, на что похожа деталь, и введите размеры по буквам. Программа построит развёртку, 3D-модель, чертёж и предложит, какими штампами её делать. Около 10 минут.</p>
+  <div class="steps" id="steps"></div>
+  <main id="view"></main>
+  <p class="muted">Результат — черновик. Перед изготовлением штампа его проверяет конструктор.</p>
+</div>
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+function h(t,a,...k){const e=document.createElement(t);for(const[x,v]of Object.entries(a||{})){if(v==null||v===false)continue;
+  if(x==='class')e.className=v;else if(x.startsWith('on'))e.addEventListener(x.slice(2),v);else e.setAttribute(x,v===true?'':v)}
+  k.flat().forEach(c=>{if(c!=null&&c!==false)e.append(c.nodeType?c:document.createTextNode(c))});return e}
+const svg=s=>{const d=document.createElement('div');d.innerHTML=s.trim();return d.firstElementChild};
+const num=v=>{if(v==null||v==='')return null;const n=parseFloat(String(v).replace(/\s/g,'').replace(',','.'));return isFinite(n)?n:null};
+const fmt=v=>String(v).replace('.',',');
+const ru=t=>String(t).replace(/(\d)\.(\d)/g,'$1,$2');
+
+/* ---------- картинки типов деталей с буквами ---------- */
+const AR='<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9z" class="a"/></marker></defs>';
+const L=(x,y,t)=>`<circle cx="${x}" cy="${y}" r="12" class="l"/><text x="${x}" y="${y+5}" text-anchor="middle" class="lt">${t}</text>`;
+const D=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="d" marker-start="url(#ar)" marker-end="url(#ar)"/>`;
+const E=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="d" stroke-width=".7"/>`;
+const side=(x)=>`<rect x="${x}" y="70" width="150" height="70" class="p" stroke-width="2"/>${D(x,160,x+150,160)}${L(x+75,160,'A')}<text x="${x}" y="58" class="n">вид сбоку</text>`;
+const PICS={
+ plate:`<svg viewBox="0 0 400 220">${AR}<rect x="60" y="40" width="260" height="120" class="p" stroke-width="2"/>${D(60,185,320,185)}${L(190,185,'A')}${D(35,40,35,160)}${L(35,100,'B')}<text x="330" y="60" class="n">S — толщина</text></svg>`,
+ angle:`<svg viewBox="0 0 400 220">${AR}<path d="M30,150 H170 V60" class="p"/>${E(30,150,30,188)}${E(172,150,172,188)}${D(30,180,172,180)}${L(100,180,'B')}${E(172,58,200,58)}${E(172,152,200,152)}${D(192,58,192,152)}${L(192,105,'C')}<text x="30" y="40" class="n">вид с торца</text>${side(230)}</svg>`,
+ channel:`<svg viewBox="0 0 400 220">${AR}<path d="M30,60 V150 H170 V60" class="p"/>${E(28,150,28,188)}${E(172,150,172,188)}${D(28,180,172,180)}${L(100,180,'B')}${E(172,58,200,58)}${E(172,152,200,152)}${D(192,58,192,152)}${L(192,105,'C')}<text x="36" y="45" class="n">полка 2</text><text x="120" y="45" class="n">полка 1</text>${side(230)}</svg>`,
+ zprofile:`<svg viewBox="0 0 400 220">${AR}<path d="M40,170 V105 H160 V40" class="p"/>${E(38,105,38,196)}${E(162,105,162,196)}${D(38,190,162,190)}${L(100,190,'B')}${E(162,38,190,38)}${E(162,103,190,103)}${D(182,38,182,103)}${L(182,70,'C')}${E(10,107,38,107)}${E(10,170,38,170)}${D(16,107,16,170)}${L(16,140,'D')}${side(230)}</svg>`,
+};
+
+/* ---------- состояние ---------- */
+const S={step:0,family:null,material:'soft_steel',sigma:'',series:'',values:{},unk:{},holes:[],presses:[16,25,40,63,100,160],res:null,fam:null};
+let META=null;
+const STEPS=['Тип детали','Материал','Размеры','Отверстия','Прессы','Результат'];
+function steps(){const e=$('#steps');e.replaceChildren(...STEPS.map((t,i)=>h('span',{class:i===S.step?'on':(i<S.step?'done':'')},`${i+1}. ${t}`)))}
+function go(i){S.step=i;render();window.scrollTo({top:0})}
+function nav(back,next,label='Дальше',dis=false){return h('div',{class:'nav'},back!=null?h('button',{class:'btn ghost',type:'button',onclick:()=>go(back)},'Назад'):null,
+  next!=null?h('button',{class:'btn',type:'button',disabled:dis,onclick:next},label):null)}
+
+function stepFamily(v){
+  v.append(h('h2',{},'На что похожа деталь?'),h('p',{class:'lede'},'Нажмите на картинку. Если похожей нет, эту деталь пока заводит оператор.'));
+  const g=h('div',{class:'grid'});
+  META.families.forEach(f=>{g.append(h('button',{class:'pick',type:'button','aria-pressed':S.family===f.key?'true':'false',
+    onclick:()=>{if(S.family!==f.key){S.family=f.key;S.values={};S.unk={};S.holes=[]}S.fam=f;go(1)}},svg(PICS[f.key]),h('b',{},f.title),h('small',{},f.hint)))});
+  v.append(g);
+}
+function stepMaterial(v){
+  v.append(h('h2',{},'Материал и серия'));
+  const c=h('div',{class:'card'});
+  c.append(h('div',{class:'fhead'},h('label',{},'Из чего деталь')),h('p',{class:'what'},'Если не знаете точно, выберите «мягкая сталь»: программа посчитает усилия с запасом.'));
+  const g=h('div',{class:'row'});
+  Object.entries(META.materials).forEach(([k,t])=>g.append(h('button',{class:'chip',type:'button','aria-pressed':S.material===k?'true':'false',onclick:()=>{S.material=k;go(1)}},t)));
+  c.append(g);
+  const sg=h('input',{type:'text',inputmode:'decimal',placeholder:'например 420',id:'sg'});sg.value=S.sigma;sg.oninput=()=>S.sigma=sg.value;
+  const se=h('input',{type:'text',inputmode:'numeric',placeholder:'например 20000',id:'se'});se.value=S.series;se.oninput=()=>S.series=se.value;
+  c.append(h('div',{class:'field'},h('div',{class:'fhead'},h('label',{for:'sg'},'Прочность σв из сертификата, МПа')),h('p',{class:'what'},'Если сертификата нет, оставьте пустым.'),h('div',{class:'row'},sg)),
+    h('div',{class:'field'},h('div',{class:'fhead'},h('label',{for:'se'},'Сколько деталей нужно в год')),h('p',{class:'what'},'Нужно, чтобы понять, выгоден ли прогрессивный штамп. Можно оставить пустым.'),h('div',{class:'row'},se)));
+  v.append(c,nav(0,()=>go(2)));
+}
+function stepDims(v){
+  const f=S.fam;
+  v.append(h('h2',{},`Размеры: ${f.title}`),h('p',{class:'lede'},'Мерьте по наружным сторонам. Буква на картинке показывает, что мерить.'),h('div',{class:'fig'},svg(PICS[f.key])));
+  const c=h('div',{class:'card'});const errs={};
+  f.measures.forEach(m=>{
+    const id='m_'+m.key;const inp=h('input',{type:'text',inputmode:'decimal',id,placeholder:m.unit==='°'?'90':''});
+    inp.value=S.values[m.key]??'';const msg=h('p',{class:'msg','aria-live':'polite'});
+    const unk=m.default!=null?h('button',{class:'chip unk',type:'button','aria-pressed':S.unk[m.key]?'true':'false',onclick:()=>{S.unk[m.key]=!S.unk[m.key];if(S.unk[m.key]){S.values[m.key]='';inp.value=''}go(2)}},'Не знаю'):null;
+    const check=()=>{msg.textContent='';const n=num(S.values[m.key]);if(S.values[m.key]&&n==null)msg.textContent='Введите число, например 12,5.';
+      else if(n!=null&&(n<m.lo||n>m.hi))msg.textContent=`Обычно от ${fmt(m.lo)} до ${fmt(m.hi)} ${m.unit}. Проверьте.`};
+    inp.oninput=()=>{S.values[m.key]=inp.value;S.unk[m.key]=false;check()};
+    if(S.unk[m.key])inp.disabled=true;check();
+    c.append(h('div',{class:'field'},h('div',{class:'fhead'},h('span',{class:'letter'},m.key),h('label',{for:id},m.title)),
+      h('p',{class:'what'},m.what+(m.default!=null?` Не знаете — нажмите «Не знаю»${m.default==='S'?', программа возьмёт радиус равным толщине':''}.`:'')),
+      h('div',{class:'row'},inp,h('span',{class:'muted'},m.unit),unk),msg,
+      h('details',{},h('summary',{},`Как мерить (${m.tool})`),h('ol',{},m.how.map(x=>h('li',{},x))))));
+  });
+  const ready=()=>f.measures.every(m=>S.unk[m.key]||(num(S.values[m.key])!=null&&num(S.values[m.key])>=m.lo&&num(S.values[m.key])<=m.hi));
+  v.append(c,nav(1,()=>{if(!ready()){alert('Заполните все размеры (или нажмите «Не знаю», где можно).');return}go(3)}));
+}
+function faceName(k){return({base:'Основание',flange_1:'Полка 1 (справа)',flange_2:'Полка 2 (слева)'})[k]}
+function stepHoles(v){
+  v.append(h('h2',{},'Отверстия'),h('p',{class:'lede'},'Все отверстия и пазы. Положение меряйте до центра отверстия. Передний торец — ближний к вам конец детали, «длина A» идёт от него.'));
+  const c=h('div',{class:'card'});
+  if(!S.holes.length)c.append(h('p',{class:'muted'},'Отверстий нет. Если есть — добавьте.'));
+  S.holes.forEach((ho,i)=>{
+    const face=h('select',{'aria-label':'Где отверстие'},S.fam.faces.map(k=>h('option',{value:k},faceName(k))));face.value=ho.face;face.onchange=()=>{ho.face=face.value;go(3)};
+    const kind=h('select',{'aria-label':'Вид'},h('option',{value:'round'},'Круглое'),h('option',{value:'slot'},'Паз (продолговатое)'));kind.value=ho.kind;kind.onchange=()=>{ho.kind=kind.value;go(3)};
+    const f=(k,lab,ph)=>{const e=h('input',{type:'text',inputmode:'decimal',placeholder:ph,'aria-label':lab});e.value=ho[k]??'';e.oninput=()=>ho[k]=e.value;return h('label',{class:'row',style:'margin:0'},h('span',{class:'muted',style:'min-width:12em'},lab),e)};
+    const box=h('div',{class:'hole'},h('div',{class:'row'},h('b',{},`Отверстие ${i+1}`),face,kind,h('button',{class:'chip',type:'button',onclick:()=>{S.holes.splice(i,1);go(3)}},'Убрать')));
+    if(ho.kind==='round')box.append(f('d','Диаметр, мм','10,5'));else{box.append(f('length','Длина паза, мм','26'),f('width','Ширина паза, мм','12'));
+      const an=h('select',{'aria-label':'Направление паза'},h('option',{value:'90'},'вдоль детали (по длине A)'),h('option',{value:'0'},'поперёк детали'));an.value=String(ho.angle??90);an.onchange=()=>ho.angle=+an.value;box.append(h('div',{class:'row'},h('span',{class:'muted',style:'min-width:12em'},'Паз идёт'),an))}
+    if(ho.face==='base')box.append(f('x','От левого края, мм',''),f('y','От переднего торца, мм',''));
+    else box.append(f('s','От переднего торца, мм',''),f('e','От края полки, мм',''));
+    c.append(box);
+  });
+  c.append(h('div',{class:'nav'},h('button',{class:'btn ghost',type:'button',onclick:()=>{S.holes.push({face:'base',kind:'round',angle:90});go(3)}},'Добавить отверстие')));
+  v.append(c,nav(2,()=>go(4)));
+}
+function stepPresses(v){
+  v.append(h('h2',{},'Какие прессы есть'),h('p',{class:'lede'},'Усилие в тоннах, как на шильдике. Программа подберёт, на какой пресс встанет каждый штамп.'));
+  const c=h('div',{class:'card'});const row=h('div',{class:'row'});
+  S.presses.forEach((t,i)=>row.append(h('button',{class:'chip',type:'button','aria-pressed':'true',onclick:()=>{S.presses.splice(i,1);go(4)},'aria-label':`Убрать пресс ${t} т`},`${fmt(t)} т ✕`)));
+  const add=h('input',{type:'text',inputmode:'decimal',placeholder:'например 63'});
+  c.append(row,h('div',{class:'row'},add,h('button',{class:'btn ghost',type:'button',onclick:()=>{const n=num(add.value);if(n&&n>0&&n<=2000){S.presses.push(n);S.presses.sort((a,b)=>a-b);go(4)}}},'Добавить')));
+  v.append(c,nav(3,calc,'Рассчитать',!S.presses.length));
+}
+async function calc(){
+  go(5);const v=$('#view');v.replaceChildren(h('div',{class:'card'},h('span',{class:'spin'}),'Считаю развёртку, 3D, чертёж и штампы. Обычно 5–20 секунд.'));
+  const values={};S.fam.measures.forEach(m=>values[m.key]=S.unk[m.key]?null:num(S.values[m.key]));
+  const holes=S.holes.map(o=>({face:o.face,kind:o.kind,d:num(o.d),length:num(o.length),width:num(o.width),x:num(o.x),y:num(o.y),s:num(o.s),e:num(o.e),angle:o.angle??90}));
+  const body={family:S.family,values,material:S.material,sigma_b_mpa:num(S.sigma),series_per_year:num(S.series)?Math.round(num(S.series)):null,holes,presses_t:S.presses};
+  try{const r=await fetch('api/calculate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();if(!r.ok)throw new Error(typeof d.detail==='string'?d.detail:'Проверьте введённые данные.');S.res=d;render()}
+  catch(e){v.replaceChildren(h('div',{class:'warn'},h('b',{},'Не получилось. '),e.message),nav(2,null))}
+}
+function stepResult(v){
+  const r=S.res;if(!r)return;
+  v.append(h('h2',{},'Готово'),h('div',{class:'warn'},h('b',{},'Черновик. '),'Штамп по этим данным не изготавливать, пока конструктор не проверит, а размеры заготовки не подтвердит пробный гиб.'));
+  const best=r.schemes.find(s=>s.key===r.recommended);
+  if(best)v.append(h('div',{class:'ok'},h('b',{},`Рекомендуем: ${best.title}. `),`${best.dies.length} ${best.dies.length===1?'штамп':'штампа'}, самый тяжёлый ${fmt(Math.max(...best.dies.map(d=>d.t)))} т.`));
+  v.append(h('div',{class:'card res'},h('b',{},'Деталь'),h('img',{src:r.iso,alt:'Общий вид детали'}),h('p',{class:'muted'},`Габарит: ${r.formed.map(fmt).join(' × ')} мм`)),
+    h('div',{class:'card res'},h('b',{},'Развёртка (заготовка)'),h('div',{class:'flat'},svg(r.flat_svg)),h('p',{},`Размер заготовки: `,h('b',{},`${fmt(r.blank.w)} × ${fmt(r.blank.l)} мм`)),
+      h('p',{class:'muted'},`Синие пунктиры — линии гибов. K-фактор ${r.x_factor!=null?fmt(r.x_factor):'—'} по справочнику: на вашем металле уточняется пробным гибом.`)));
+  const sc=h('div',{class:'card'},h('b',{},'Как делать: варианты'));
+  r.schemes.forEach(s=>sc.append(h('div',{class:'scheme'+(s.key===r.recommended?' best':'')},
+    h('div',{class:'shead'},h('b',{},`${s.key}. ${s.title}`),h('span',{class:'tag'},s.suitable?(s.key===r.recommended?'рекомендуем':'подходит'):'не подходит')),
+    h('ul',{},s.dies.map(d=>h('li',{},`${d.name} — ${fmt(d.t)} т`))),s.verdict?h('p',{class:'muted'},ru(s.verdict)):null)));
+  v.append(sc);
+  if(r.warnings.length||r.unknown.length)v.append(h('div',{class:'card'},h('b',{},'На что обратить внимание'),h('ul',{},[...r.warnings,...r.unknown].slice(0,12).map(w=>h('li',{},ru(w))))));
+  const F=r.files;v.append(h('div',{class:'card'},h('b',{},'Файлы'),h('div',{class:'dl'},
+    h('a',{href:F.pdf,download:''},h('b',{},'Чертёж, PDF'),h('small',{},'виды детали и развёртка')),
+    h('a',{href:F.dxf,download:''},h('b',{},'Развёртка, DXF'),h('small',{},'для станка и AutoCAD/NX')),
+    h('a',{href:F.step,download:''},h('b',{},'3D-модель, STEP'),h('small',{},'NX, SolidWorks, Компас')),
+    h('a',{href:F.report,download:''},h('b',{},'Расчёт, MD'),h('small',{},'проверки, усилия, прессы')),
+    h('a',{href:F.model,download:''},h('b',{},'Модель, JSON'),h('small',{},'для оператора'))),h('p',{class:'muted'},'Файлы хранятся 3 часа.')));
+  v.append(nav(2,()=>{S.res=null;go(0)},'Новая деталь'));
+}
+function render(){steps();const v=$('#view');v.replaceChildren();
+  if(!META){v.append(h('div',{class:'card'},h('span',{class:'spin'}),'Загрузка…'));return}
+  [stepFamily,stepMaterial,stepDims,stepHoles,stepPresses,stepResult][S.step](v)}
+fetch('api/families').then(r=>r.json()).then(d=>{META=d;render()}).catch(()=>{$('#view').replaceChildren(h('div',{class:'warn'},'Сервер не отвечает. Обновите страницу.'))});
+render();
+})();
+</script>
+</body>
+</html>
