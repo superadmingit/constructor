@@ -57,7 +57,7 @@ uvicorn app.main:app --port 7860          # открыть http://localhost:7860
 
 ```
 pip install -r requirements-dev.txt
-python -m pytest -q                                                   # 47 тестов
+python -m pytest -q                                                   # 46 тестов
 python -m stamp_engine.cli examples/skoba_u.json examples/shop_example.json --out out/
 python tools/make_norms_pdf.py norms_approval.pdf                     # листы для конструктора
 python datapage/build.py data_collection.html                         # страница данных цеха
